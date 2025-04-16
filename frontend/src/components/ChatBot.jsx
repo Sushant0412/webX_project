@@ -1,3 +1,4 @@
+import ReactMarkdown from "react-markdown";
 import { useState } from "react";
 import axios from "axios";
 
@@ -16,12 +17,9 @@ const ChatBot = () => {
     setIsLoading(true);
 
     try {
-      const response = await axios.post(
-        "http://localhost:5000/api/chat",
-        {
-          message: userMessage,
-        }
-      );
+      const response = await axios.post("http://localhost:5000/api/chat", {
+        message: userMessage,
+      });
 
       setMessages((prev) => [
         ...prev,
@@ -61,7 +59,7 @@ const ChatBot = () => {
             }`}
           >
             <div
-              className={`inline-block p-3 rounded-lg ${
+              className={`inline-block p-3 rounded-lg max-w-full whitespace-pre-wrap ${
                 message.type === "user"
                   ? "bg-blue-500 text-white"
                   : message.type === "error"
@@ -69,15 +67,14 @@ const ChatBot = () => {
                   : "bg-gray-100 text-gray-800"
               }`}
             >
-              {message.content}
+              {message.type === "bot" ? (
+                <ReactMarkdown>{message.content}</ReactMarkdown>
+              ) : (
+                message.content
+              )}
             </div>
           </div>
         ))}
-        {isLoading && (
-          <div className="text-center text-gray-500">
-            <div className="animate-pulse">Thinking...</div>
-          </div>
-        )}
       </div>
 
       <form onSubmit={handleSubmit} className="flex gap-2">

@@ -58,11 +58,9 @@ router.post(
       res.json({ message: "Attendance marked successfully" });
     } catch (err) {
       if (err.code === 11000) {
-        return res
-          .status(400)
-          .json({
-            message: "Attendance already marked for some students on this date",
-          });
+        return res.status(400).json({
+          message: "Attendance already marked for some students on this date",
+        });
       }
       console.error(err.message);
       res.status(500).send("Server Error");
@@ -97,13 +95,89 @@ router.get("/reports", auth, async (req, res) => {
       .select("-__v");
 
     const reports = attendanceRecords.map((record) => ({
+      _id: record._id,
       student_name: record.student.name,
       roll_number: record.student.roll_number,
+      student_id: record.student._id,
       date: record.date,
       status: record.status,
     }));
 
     res.json(reports);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send("Server Error");
+  }
+});
+
+// Update attendance status
+router.put(
+  "/:id",
+  [auth, [check("status", "Status is required").isIn(["present", "absent"])]],
+  async (req, res) => {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+      }
+
+      const { status } = req.body;
+
+      // Find the attendance record
+      const attendance = await Attendance.findById(req.params.id);
+      if (!attendance) {
+        return res.status(404).json({ message: "Attendance record not found" });
+      }
+
+      // Verify course exists and belongs to teacher
+      const course = await Course.findById(attendance.course);
+      if (!course) {
+        return res.status(404).json({ message: "Course not found" });
+      }
+      if (course.teacher.toString() !== req.user.id) {
+        return res.status(401).json({ message: "Not authorized" });
+      }
+
+      // Update attendance status
+      attendance.status = status;
+      await attendance.save();
+
+      res.json({
+        _id: attendance._id,
+        student_name: attendance.student.name,
+        roll_number: attendance.student.roll_number,
+        date: attendance.date,
+        status: attendance.status,
+      });
+    } catch (err) {
+      console.error(err.message);
+      res.status(500).send("Server Error");
+    }
+  }
+);
+
+// Delete attendance record
+router.delete("/:id", auth, async (req, res) => {
+  try {
+    // Find the attendance record
+    const attendance = await Attendance.findById(req.params.id);
+    if (!attendance) {
+      return res.status(404).json({ message: "Attendance record not found" });
+    }
+
+    // Verify course exists and belongs to teacher
+    const course = await Course.findById(attendance.course);
+    if (!course) {
+      return res.status(404).json({ message: "Course not found" });
+    }
+    if (course.teacher.toString() !== req.user.id) {
+      return res.status(401).json({ message: "Not authorized" });
+    }
+
+    // Delete the attendance record
+    await Attendance.findByIdAndDelete(req.params.id);
+
+    res.json({ message: "Attendance record deleted successfully" });
   } catch (err) {
     console.error(err.message);
     res.status(500).send("Server Error");

@@ -12,6 +12,8 @@ import LoginForm from "./components/auth/LoginForm";
 import RegisterForm from "./components/auth/RegisterForm";
 import MarkAttendanceForm from "./components/attendance/MarkAttendanceForm";
 import AttendanceReports from "./components/attendance/AttendanceReports";
+import StudentAttendance from "./components/attendance/StudentAttendance";
+import EditAttendance from "./components/attendance/EditAttendance";
 
 // Layout components
 export const Navigation = () => {
@@ -74,6 +76,12 @@ export const Navigation = () => {
                       Reports
                     </Link>
                     <Link
+                      to="/edit-attendance"
+                      className="inline-flex items-center border-b-2 border-transparent px-1 pt-1 text-sm font-medium text-gray-500 hover:border-gray-300 hover:text-gray-700"
+                    >
+                      Edit Attendance
+                    </Link>
+                    <Link
                       to="/chatbot"
                       className="inline-flex items-center border-b-2 border-transparent px-1 pt-1 text-sm font-medium text-gray-500 hover:border-gray-300 hover:text-gray-700"
                     >
@@ -83,7 +91,7 @@ export const Navigation = () => {
                 )}
                 {userRole === "student" && (
                   <Link
-                    to="/reports"
+                    to="/student-attendance"
                     className="inline-flex items-center border-b-2 border-transparent px-1 pt-1 text-sm font-medium text-gray-500 hover:border-gray-300 hover:text-gray-700"
                   >
                     My Attendance
@@ -144,8 +152,28 @@ const Dashboard = () => {
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [userRole, setUserRole] = useState(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
+    // Check user role from token
+    const token = localStorage.getItem("token");
+    if (token) {
+      try {
+        const payload = JSON.parse(atob(token.split(".")[1]));
+        setUserRole(payload.user.role);
+
+        // If student, redirect to student attendance view
+        if (payload.user.role === "student") {
+          navigate("/student-attendance");
+          return;
+        }
+      } catch (error) {
+        console.error("Error parsing token:", error);
+      }
+    }
+
+    // Only fetch courses for teachers
     const fetchCourses = async () => {
       try {
         const response = await fetch("http://localhost:3000/api/courses", {
@@ -163,7 +191,7 @@ const Dashboard = () => {
     };
 
     fetchCourses();
-  }, []);
+  }, [navigate]);
 
   return (
     <div className="mx-auto max-w-7xl py-6 sm:px-6 lg:px-8">
@@ -225,6 +253,8 @@ function App() {
             <Route path="/" element={<Dashboard />} />
             <Route path="/attendance" element={<MarkAttendanceForm />} />
             <Route path="/reports" element={<AttendanceReports />} />
+            <Route path="/edit-attendance" element={<EditAttendance />} />
+            <Route path="/student-attendance" element={<StudentAttendance />} />
             <Route path="/login" element={<LoginForm />} />
             <Route path="/register" element={<RegisterForm />} />
             <Route path="/chatbot" element={<ChatBot />} />

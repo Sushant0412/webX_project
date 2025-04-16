@@ -1,12 +1,13 @@
-require("dotenv").config();
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
+require("dotenv").config();
+
 const app = express();
 
 // Middleware
-app.use(cors());
 app.use(express.json());
+app.use(cors());
 
 // MongoDB Connection
 mongoose
@@ -28,6 +29,7 @@ mongoose
 app.use("/api/auth", require("./routes/auth"));
 app.use("/api/courses", require("./routes/courses"));
 app.use("/api/attendance", require("./routes/attendance"));
+app.use("/api/student-attendance", require("./routes/studentAttendance"));
 
 // Error handling middleware
 app.use((err, req, res, next) => {

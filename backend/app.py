@@ -36,7 +36,7 @@ def chat():
         prompt = f"{COUNSELOR_CONTEXT}\n\nStudent: {message}\nCounselor:"
 
         # Get Gemini model and generate response
-        model = genai.GenerativeModel("gemini-pro")
+        model = genai.GenerativeModel(model_name="gemini-1.5-flash-002")
         response = model.generate_content(prompt)
 
         return jsonify({"response": response.text})
